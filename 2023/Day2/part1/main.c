@@ -4,7 +4,10 @@
 #include <ctype.h>
 
 #define MAXDIR 100
-#define MAXLINE 100
+#define MAXLINE 500
+#define MAXRED 12
+#define MAXGREEN 13
+#define MAXBLUE 14
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
@@ -32,16 +35,73 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    int current_line_length, sucsses;
+    int current_line_length, success, game_ID_sum = 0,
+    max_num_of_red, max_num_of_green, max_num_of_blue,
+    current_num = 0, current_ID = 0;
     char dst[MAXLINE], str[MAXLINE]; 
 
-    current_line_length = get_line(fp, str);
-    sucsses = get_word_and_cut(dst, str);
+    while ((current_line_length = get_line(fp, str)) != -1) {
+        max_num_of_red = 0;     
+        max_num_of_green = 0;     
+        max_num_of_blue = 0;     
 
-    if (strcmp(dst, "Game") == 0) {
-        ;
+        success = get_word_and_cut(dst, str);
+
+        if (strcmp(dst, "Game") == 0) {
+            success = get_word_and_cut(dst, str);
+            current_ID = atoi(dst);          
+        }
+        
+        while (success) {
+
+            success = get_word_and_cut(dst, str);
+            if (strcmp(dst, ":") == 0) {
+                ;
+            }
+            
+            if ((current_num = atoi(dst))) {
+                success = get_word_and_cut(dst, str);
+                if (strcmp(dst, "red") == 0) {
+                    /*test*/
+                    // dprintSTRING(dst);
+                    /*test*/
+                    if (current_num > max_num_of_red) {
+                        max_num_of_red = current_num;
+                    }
+                }
+
+                if (strcmp(dst, "green") == 0) {
+                    /*test*/
+                    // dprintSTRING(dst);
+                    /*test*/
+                    if (current_num > max_num_of_green) {
+                        max_num_of_green = current_num;
+                    }
+                }
+                    
+                if (strcmp(dst, "blue") == 0) {
+                    /*test*/
+                    // dprintSTRING(dst);
+                    /*test*/
+                    if (current_num > max_num_of_blue) {
+                        max_num_of_blue = current_num;
+                    }
+                }
+            }
+            /*test*/
+            // dprintSTRING(dst);
+            // dprintSTRING(str);
+            /*test*/
+        }
+
+        if (max_num_of_red <= MAXRED &&
+            max_num_of_green <= MAXGREEN &&
+            max_num_of_blue <= MAXBLUE) {
+                game_ID_sum += current_ID;
+        }
     }
 
+    dprintINT(game_ID_sum);
     return 0;
 }
 
@@ -101,13 +161,27 @@ int get_next_word_from_line(char *dst, char *src)
                       c != ',' && 
                       c != '\n'&&
                       c != '\0') {
-        dst[j] = src[i];
-        i++;
-        j++;
+                        dst[j] = src[i];
+                        i++;
+                        j++;
     }
+    
+    if ((c == ' ' ||
+        c == ';' || 
+        c == ':' || 
+        c == ',' || 
+        c == '\n'||
+        c == '\0') && i == 0) {
+            dst[j++] = c;
+            i++;
+    }
+
     dst[j] = '\0';
 
-    if (src[++i] == '\0') {
+    /*test*/
+    // dprintCHAR(src[i]);
+    /*test*/
+    if (src[i] == '\0') {
         return -1;
     }
     return i;
@@ -129,6 +203,6 @@ int get_word_and_cut(char *dst, char *src)
     // dprintSTRING(src);
     // dprintINT(last_pos);
     /*test*/
-    copy_arry_by_indesies(src, last_pos-1, length(src), src);
+    copy_arry_by_indesies(src, last_pos, length(src), src);
     return 1;
 }
