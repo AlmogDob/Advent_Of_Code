@@ -3,7 +3,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define MAX_LEN_LINE (int)1e3
+#define MAX_LEN_LINE (int)2e2
+#define MAX_NUM_OF_LINES MAX_LEN_LINE
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
@@ -41,8 +42,13 @@ int main(int argc, char const *argv[])
     int number_of_winnig_numbers = 0, number_of_my_numbers = 0,
     current_line_len, success = 1, *winnig_numbers, *my_numbers,
     current_number = 0, number_index = 0, number_of_matches = 0,
-    sum_of_worth = 0;
-    unsigned int current_worth = 1;
+    cards_historgram[MAX_NUM_OF_LINES], matches_list[MAX_NUM_OF_LINES],
+    current_card_num, sum_of_cards = 0;
+
+    for (int i = 0; i < MAX_NUM_OF_LINES; i++) {
+        cards_historgram[i] = 0;
+        matches_list[i] = 0;
+    }
 
     while ((current_line_len = get_line(fp, current_line)) != -1) {
 
@@ -53,6 +59,10 @@ int main(int argc, char const *argv[])
 
         while (success) {
             success = get_word_and_cut(current_word, current_line);
+
+            if((current_number = atoi(current_word))) {
+                current_card_num = current_number;
+            }
 
             if (!strcmp(current_word, ":")) {
                 while (strcmp(current_word, "|")) {
@@ -78,9 +88,9 @@ int main(int argc, char const *argv[])
         }
 
         number_of_matches = get_number_of_matches(winnig_numbers, number_of_winnig_numbers, my_numbers, number_of_my_numbers);
-        current_worth = number_of_matches? current_worth<<(number_of_matches-1) : 0;
-        sum_of_worth += current_worth;
-    
+        cards_historgram[current_card_num] += 1;
+        matches_list[current_card_num] = number_of_matches;
+
         free(my_numbers);
         number_of_my_numbers = 0;
         free(winnig_numbers);
@@ -88,10 +98,25 @@ int main(int argc, char const *argv[])
 
         number_of_matches = 0;
         success = 1;
-        current_worth = 1;
 
     }
-    dprintINT(sum_of_worth);    
+    
+    for (int i = 0; i < MAX_NUM_OF_LINES; i++) {
+        for (int j = 0; j < matches_list[i]; j++) {
+            cards_historgram[i+j+1] += cards_historgram[i];
+        }
+    }
+
+    for (int i = 0; i< MAX_NUM_OF_LINES; i++) {
+        sum_of_cards += cards_historgram[i];
+    }
+
+    for (int i = 0; i < MAX_NUM_OF_LINES; i++) {
+        printf("%d, ", cards_historgram[i]);
+    }
+    printf("\n");
+
+    dprintINT(sum_of_cards);
 
     return 0;
 }
