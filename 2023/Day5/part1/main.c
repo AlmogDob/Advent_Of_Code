@@ -2,14 +2,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e1
+#define MAX_NUM_OF_NUMBERS (int)1e2
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
-#define dprintL(expr) printf(#expr " = %ld\n", expr)
+#define dprintL(expr) printf(#expr " = %lu\n", expr)
 #define dprintUINT(expr) printf(#expr " = %u\n", expr)
 
 int get_line(FILE *fp, char *dst);
@@ -39,10 +40,16 @@ int main(int argc, char const *argv[])
 
     int current_line_len, i;
 
-    long seed_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    uint64_t seed_numbers[MAX_NUM_OF_NUMBERS] = {0},
     soil_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    fertilize_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    water_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    light_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    temperature_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    humidity_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    location_numbers[MAX_NUM_OF_NUMBERS] = {0},
     destination_range_start, source_range_start, range_length,
-    current_number;
+    current_number, smallest_location;
 
     char current_line[MAX_LEN_LINE], current_word[MAX_LEN_LINE];
 
@@ -57,6 +64,7 @@ int main(int argc, char const *argv[])
                 }
             }
         }
+        
         if (!strcmp(current_word, "seed-to-soil")) {
             get_line(fp, current_line);
             while (strcmp(current_line, "")) {
@@ -66,30 +74,169 @@ int main(int argc, char const *argv[])
                 source_range_start = atol(current_word);
                 get_word_and_cut(current_word, current_line);
                 range_length = atol(current_word);
-                dprintL(destination_range_start);
-                dprintL(source_range_start);
-                dprintL(range_length);
                 for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
                     current_number = seed_numbers[i];
-                    if (current_number >= destination_range_start &&
-                        current_number < destination_range_start + range_length) {
-                            soil_numbers[i] = (destination_range_start - source_range_start) + current_number;
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            soil_numbers[i] = (current_number - source_range_start) + destination_range_start;
                         }
-                    else {
+                    else if (fertilize_numbers[i] == 0) {
                         soil_numbers[i] = current_number;
                     }
                 }
-
                 get_line(fp, current_line);
             }
         }
 
+        if (!strcmp(current_word, "soil-to-fertilizer")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = soil_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            fertilize_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    else if (fertilize_numbers[i] == 0) {
+                        fertilize_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
+
+        if (!strcmp(current_word, "fertilizer-to-water")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = fertilize_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            water_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    else if (water_numbers[i] == 0) {
+                        water_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
+
+        if (!strcmp(current_word, "water-to-light")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = water_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            light_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    else if (light_numbers[i] == 0) {
+                        light_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
+
+        if (!strcmp(current_word, "light-to-temperature")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = light_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            temperature_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    else if (temperature_numbers[i] == 0) {
+                        temperature_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
+
+        if (!strcmp(current_word, "temperature-to-humidity")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = temperature_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            humidity_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    else if (humidity_numbers[i] == 0) {
+                        humidity_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
+
+        if (!strcmp(current_word, "humidity-to-location")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = humidity_numbers[i];
+                    if (current_number >= source_range_start &&
+                        current_number < source_range_start + range_length) {
+                            location_numbers[i] = (current_number - source_range_start) + destination_range_start;
+                        }
+                    if (location_numbers[i] == 0) {
+                        location_numbers[i] = current_number;
+                    }
+                }
+                get_line(fp, current_line);
+            }
+        }
     }
 
-    for (int i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
-        dprintL(seed_numbers[i]);
-        dprintL(soil_numbers[i]);
+    i = 0;
+    smallest_location = location_numbers[0];
+    while (seed_numbers[i++] != 0) {
+        dprintL(location_numbers[i]);
+        if (smallest_location > location_numbers[i-1]) {
+            smallest_location = location_numbers[i-1];
+        }
     }
+
+    dprintL(smallest_location);
     
     return 0;
 }
