@@ -4,10 +4,12 @@
 #include <stdlib.h>
 
 #define MAX_LEN_LINE (int)1e3
+#define MAX_NUM_OF_NUMBERS (int)1e1
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
+#define dprintL(expr) printf(#expr " = %ld\n", expr)
 #define dprintUINT(expr) printf(#expr " = %u\n", expr)
 
 int get_line(FILE *fp, char *dst);
@@ -34,6 +36,60 @@ int main(int argc, char const *argv[])
     }
 
 /*------------------------------------------------------------*/
+
+    int current_line_len, i;
+
+    long seed_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    soil_numbers[MAX_NUM_OF_NUMBERS] = {0},
+    destination_range_start, source_range_start, range_length,
+    current_number;
+
+    char current_line[MAX_LEN_LINE], current_word[MAX_LEN_LINE];
+
+    while((current_line_len = get_line(fp, current_line)) != -1) {
+        get_word_and_cut(current_word, current_line);
+        if (!strcmp(current_word, "seeds")) {
+            get_word_and_cut(current_word, current_line);
+            i = 0;
+            while (get_word_and_cut(current_word, current_line)) {
+                if (isdigit(current_word[0])) {
+                    seed_numbers[i++] = atol(current_word);
+                }
+            }
+        }
+        if (!strcmp(current_word, "seed-to-soil")) {
+            get_line(fp, current_line);
+            while (strcmp(current_line, "")) {
+                get_word_and_cut(current_word, current_line);
+                destination_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                source_range_start = atol(current_word);
+                get_word_and_cut(current_word, current_line);
+                range_length = atol(current_word);
+                dprintL(destination_range_start);
+                dprintL(source_range_start);
+                dprintL(range_length);
+                for(i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+                    current_number = seed_numbers[i];
+                    if (current_number >= destination_range_start &&
+                        current_number < destination_range_start + range_length) {
+                            soil_numbers[i] = (destination_range_start - source_range_start) + current_number;
+                        }
+                    else {
+                        soil_numbers[i] = current_number;
+                    }
+                }
+
+                get_line(fp, current_line);
+            }
+        }
+
+    }
+
+    for (int i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+        dprintL(seed_numbers[i]);
+        dprintL(soil_numbers[i]);
+    }
     
     return 0;
 }
@@ -48,11 +104,11 @@ int get_line(FILE *fp, char *dst)
         i++;
         if (i >= MAX_LEN_LINE) {
             fprintf(stderr, "ERROR: line too long\n");
-            return -1;
+            exit(1);
         }
     }
     dst[i] = '\0';
-    if (i == 0) {
+    if (c == EOF) {
         return -1;
     }
     return i;
@@ -104,7 +160,7 @@ int get_next_word_from_line(char *dst, char *src)
     /*test*/
     // dprintCHAR(src[i]);
     /*test*/
-    if (src[i] == '\0') {
+    if (j == 0) {
         return -1;
     }
     return i;
