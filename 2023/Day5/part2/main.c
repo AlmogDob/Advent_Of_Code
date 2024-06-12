@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -6,24 +5,36 @@
 #include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e6
+#define MAX_NUM_OF_NUMBERS (int)1e1
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
 #define dprintUL(expr) printf(#expr " = %lu\n", expr)
 #define dprintUINT(expr) printf(#expr " = %u\n", expr)
+#define PRINT_RANGE(expr) printf(#expr " = (%lu, %lu)\n", expr.start, expr.end)
+#define PRINT_MAP(expr) printf(#expr ":\nsource: (%lu, %lu)\ndestination: (%lu, %lu)\n", expr.source.start, expr.source.end, expr.destination.start, expr.destination.end)
+
+typedef struct {
+    uint64_t start;
+    uint64_t end;
+} Range;
+
+typedef struct {
+    Range source;
+    Range destination;
+} Map;
 
 int get_line(FILE *fp, char *dst);
 int length(char *str);
 int get_next_word_from_line(char *dst, char *src);
 void copy_arry_by_indesies(char *target, int start, int end, char *src);
 int get_word_and_cut(char *dst, char *src);
-void populat(FILE *fp, uint64_t *current_list, uint64_t *previus_list);
-// void propaget(FILE *fp, uint64_t *seed_numbers, uint64_t *soil_numbers,
-//               uint64_t *fertilize_numbers, uint64_t *water_numbers,
-//               uint64_t *light_numbers, uint64_t *temperature_numbers,
-//               uint64_t *humidity_numbers, uint64_t *location_numbers);
+void populat_maps(FILE *fp, Map *maps, int *number_of_maps);
+void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t destination);
+void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_ranges, Map *maps, int number_of_maps, int *number_of_temp_ranges);
+void qsort_ranges(Range *v, int left, int right);
+void swap_ranges(Range *v, int i, int j);
 
 int main(int argc, char const *argv[])
 {
@@ -43,78 +54,127 @@ int main(int argc, char const *argv[])
     }
 
 /*------------------------------------------------------------*/
+    Range seeds_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    seeds_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    soil_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    soil_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    fertilier_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    fertilier_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    water_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    water_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    light_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    light_temp_renges[MAX_NUM_OF_NUMBERS] = {0},
+    temperature_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    temperature_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    humidity_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    humidity_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    location_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    location_temp_ranges[MAX_NUM_OF_NUMBERS] = {0};
+    
+    Map seed_to_soil_maps[MAX_NUM_OF_NUMBERS] = {0},
+    soil_to_fertilizer_maps[MAX_NUM_OF_NUMBERS] = {0},
+    fertilizer_to_water_maps[MAX_NUM_OF_NUMBERS] = {0},
+    water_to_light_maps[MAX_NUM_OF_NUMBERS] = {0},
+    light_to_temperature_maps[MAX_NUM_OF_NUMBERS] = {0},
+    temperature_to_humidity_maps[MAX_NUM_OF_NUMBERS] = {0},
+    humidity_to_location_maps[MAX_NUM_OF_NUMBERS] = {0};
 
-    int current_line_len, i;
+    int current_line_length, i, number_of_seed_to_soil_maps,
+    number_of_soil_to_fertilizer_maps, number_of_fertilizer_to_water_maps,
+    number_of_water_to_light_maps, number_of_light_to_temperature_maps,
+    number_of_temperature_to_humidity_maps, number_of_humidity_to_location_maps;
 
-    uint64_t seed_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    soil_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    fertilize_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    water_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    light_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    temperature_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    humidity_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    location_numbers[MAX_NUM_OF_NUMBERS] = {0},
-    smallest_location, start, length;
+    int number_of_seed_ranges, number_of_soil_ranges,
+    number_of_fertilizer_ranges, number_of_water_ranges,
+    number_of_light_ranges, number_oferature_ranges,
+    number_of_humidity_ranges, number_of_location_ranges;
+
+    int number_of_temp_seed_ranges, number_of_temp_soil_ranges,
+    number_of_temp_fertilizer_ranges, number_of_temp_water_ranges,
+    number_of_temp_light_ranges, number_of_temp_temperature_ranges,
+    number_of_temp_humidity_ranges, number_of_temp_location_ranges;
 
     char current_line[MAX_LEN_LINE], current_word[MAX_LEN_LINE];
 
-    while((current_line_len = get_line(fp, current_line)) != -1) {
+    uint64_t range_length, range_start;
+    
+    while ((current_line_length = get_line(fp, current_line)) != -1) {
         get_word_and_cut(current_word, current_line);
         if (!strcmp(current_word, "seeds")) {
             get_word_and_cut(current_word, current_line);
-            sscanf(current_line, "%lu %lu", &start, &length);
-            dprintUL(start);
-            dprintUL(length);
-            dprintSTRING(current_line);
+            i = 0;
+            while (get_word_and_cut(current_word, current_line)) {
+                sscanf(current_word, "%lu", &range_start);
+                get_word_and_cut(current_word, current_line);
+                sscanf(current_word, "%lu", &range_length);
+                seeds_ranges[i].start = range_start;
+                seeds_ranges[i].end = range_start + range_length-1;
+                PRINT_RANGE(seeds_ranges[i]);
+                i++;
+                number_of_seed_ranges = i;
+            }
         }
         
         if (!strcmp(current_word, "seed-to-soil")) {
-            populat(fp, soil_numbers, seed_numbers);
+            populat_maps(fp, seed_to_soil_maps, &number_of_seed_to_soil_maps);
         }
 
         if (!strcmp(current_word, "soil-to-fertilizer")) {
-            populat(fp, fertilize_numbers, soil_numbers);
+            populat_maps(fp, soil_to_fertilizer_maps, &number_of_soil_to_fertilizer_maps);
         }
 
         if (!strcmp(current_word, "fertilizer-to-water")) {
-            populat(fp, water_numbers, fertilize_numbers);
+            populat_maps(fp, fertilizer_to_water_maps, &number_of_fertilizer_to_water_maps);
         }
 
         if (!strcmp(current_word, "water-to-light")) {
-            populat(fp, light_numbers, water_numbers);
+            populat_maps(fp, water_to_light_maps, &number_of_water_to_light_maps);
         }
 
         if (!strcmp(current_word, "light-to-temperature")) {
-            populat(fp, temperature_numbers, light_numbers);
+            populat_maps(fp, light_to_temperature_maps, &number_of_light_to_temperature_maps);
         }
 
         if (!strcmp(current_word, "temperature-to-humidity")) {
-            populat(fp, humidity_numbers, temperature_numbers);
+            populat_maps(fp, temperature_to_humidity_maps, &number_of_temperature_to_humidity_maps);
         }
 
         if (!strcmp(current_word, "humidity-to-location")) {
-            populat(fp, location_numbers, humidity_numbers);
+            populat_maps(fp, humidity_to_location_maps, &number_of_humidity_to_location_maps);
         }
     }
 
-    i = 0;
-    smallest_location = location_numbers[0];
-    while (seed_numbers[i] != 0) {
-        // dprintUL(seed_numbers[i]);
-        // dprintUL(soil_numbers[i]);
-        // dprintUL(fertilize_numbers[i]);
-        // dprintUL(water_numbers[i]);
-        // dprintUL(light_numbers[i]);
-        // dprintUL(temperature_numbers[i]);
-        // dprintUL(humidity_numbers[i]);
-        // dprintUL(location_numbers[i]);
-        if (smallest_location > location_numbers[i]) {
-            smallest_location = location_numbers[i];
-        }
-        i++;
-    }
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(seed_to_soil_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(soil_to_fertilizer_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(fertilizer_to_water_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(water_to_light_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(light_to_temperature_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(temperature_to_humidity_maps[i]);
+    // }
+    // printf("\n");
+    // for (i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
+    //     PRINT_MAP(humidity_to_location_maps[i]);
+    // }
 
-    dprintUL(smallest_location);
+    creat_sub_ranges(seeds_temp_ranges, seeds_ranges, number_of_seed_ranges,
+                     seed_to_soil_maps, number_of_seed_to_soil_maps,
+                     &number_of_temp_seed_ranges);
     
     return 0;
 }
@@ -221,40 +281,116 @@ int get_word_and_cut(char *dst, char *src)
     return 1;
 }
 
-void populat(FILE *fp, uint64_t *current_list, uint64_t *previus_list)
+void populat_maps(FILE *fp, Map *maps, int *number_of_maps)
 {
     char current_line[MAX_LEN_LINE];
-    uint64_t destination_range_start, source_range_start, range_length,
-    current_number;
+    uint64_t destination_range_start, source_range_start, range_length;
+    int i = 0;
 
     get_line(fp, current_line);
     while (strcmp(current_line, "")) {
         sscanf(current_line, "%lu %lu %lu", &destination_range_start, &source_range_start, &range_length);
-        // get_word_and_cut(current_word, current_line);
-        // destination_range_start = atol(current_word);
-        // get_word_and_cut(current_word, current_line);
-        // source_range_start = atol(current_word);
-        // get_word_and_cut(current_word, current_line);
-        // range_length = atol(current_word);
-        for(int i = 0; i < MAX_NUM_OF_NUMBERS; i++) {
-            current_number = previus_list[i];
-            if (current_number >= source_range_start &&
-                current_number < (source_range_start + range_length)) {
-                    current_list[i] = (current_number - source_range_start) + destination_range_start;
-                }
-            else if (current_list[i] == 0) {
-                current_list[i] = current_number;
-            }
-        }
+        maps[i].destination.start = destination_range_start;
+        maps[i].destination.end = destination_range_start + range_length-1;
+        maps[i].source.start = source_range_start;
+        maps[i].source.end = source_range_start + range_length-1;
         get_line(fp, current_line);
+        i++;
+        *number_of_maps = i;
     }
-
 }
 
-// void propaget(FILE *fp, uint64_t *seed_numbers, uint64_t *soil_numbers,
-//               uint64_t *fertilize_numbers, uint64_t *water_numbers,
-//               uint64_t *light_numbers, uint64_t *temperature_numbers,
-//               uint64_t *humidity_numbers, uint64_t *location_numbers)
-// {
+void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t destination)
+{
+    for (int i = 0; i < number_of_maps; i++) {
+        if (source >= maps[i].source.start && source <= maps[i].source.end) {
+            destination = (source - maps[i].source.start) + maps[i].destination.start;
+        }
+    }
+}
 
-// }
+void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, Map *maps, int number_of_maps, int *number_of_temp_ranges)
+{
+    Range current_range, temp_of_temp[MAX_NUM_OF_NUMBERS];
+    int j = 0, temp_index = 0;
+
+    for (int k = 0; k < number_of_ranges; k++) {
+        current_range = ranges[k];
+        for (int i = 0; i < number_of_maps; i++) {
+            PRINT_MAP(maps[i]);
+            if (maps[i].source.start < current_range.start &&
+                maps[i].source.end < current_range.start) {
+                    ;   /* no match */
+            }
+            if (maps[i].source.start < current_range.start &&
+                maps[i].source.end <= current_range.end &&
+                maps[i].source.end >= current_range.start) {
+                    ; /* some match on the left */
+                    temp_ranges[j].start = current_range.start;
+                    temp_ranges[j].end = maps[i].source.end;
+                    j++;
+            }
+            if (maps[i].source.start >= current_range.start &&
+                maps[i].source.start < current_range.end &&
+                maps[i].source.end <= current_range.end) {
+                    ; /* all the map inside range */
+                    temp_ranges[j].start = maps[i].source.start;
+                    temp_ranges[j].end = maps[i].source.end;
+                    j++;
+            }
+            if (maps[i].source.start >= current_range.start &&
+                maps[i].source.start <= current_range.end &&
+                maps[i].source.end > current_range.end) {
+                    ; /* some match on the right */
+                    temp_ranges[j].start = maps[i].source.start;
+                    temp_ranges[j].end = current_range.end;
+                    j++;
+            }
+            if (maps[i].source.start > current_range.end &&
+                maps[i].source.end > current_range.end) {
+                    ;   /* no match */
+            }
+            if (maps[i].source.start <= current_range.start &&
+                maps[i].source.end >= current_range.end) {
+                    ; /* all the range inside the map */
+                    temp_ranges[j].start = current_range.start;
+                    temp_ranges[j].end = current_range.end;
+                    j++;
+            }
+        }
+        *number_of_temp_ranges = j;
+    }
+
+    qsort_ranges(temp_ranges, 0, *number_of_temp_ranges-1);
+
+    for (int i = 0; i < *number_of_temp_ranges; i++) {
+        PRINT_RANGE(temp_ranges[i]);
+    }
+}
+
+/* qsort: sort v[left]...v[right] int increasing order */
+void qsort_ranges(Range *v, int left, int right)
+{
+    int i, last;
+
+    if (left >= right)                  /* do nothing if array contains */
+        return;                         /* fewer than two elements */
+    swap_ranges(v, left, (left + right) / 2);  /* move partition elem */
+    last = left;                        /* to v[0] */
+    for (i = left + 1; i <= right; i++) /* partition */
+        if (v[i].start < v[left].start)
+            swap_ranges(v, ++last, i);
+    swap_ranges(v, left, last); /* restore partition elem */
+    qsort_ranges(v, left, last - 1);
+    qsort_ranges(v, last + 1, right);
+}
+
+/* swap: interchange v[i] and v[j] */
+void swap_ranges(Range *v, int i, int j)
+{
+    Range temp;
+
+    temp = v[i];
+    v[i] = v[j];
+    v[j] = temp;
+}

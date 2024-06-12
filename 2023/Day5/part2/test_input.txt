@@ -2,7 +2,7 @@ seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
-52 50 48
+52 60 48
 
 soil-to-fertilizer map:
 0 15 37
@@ -30,4 +30,4 @@ temperature-to-humidity map:
 
 humidity-to-location map:
 60 56 37
-56 93 4seed
+56 93 4
