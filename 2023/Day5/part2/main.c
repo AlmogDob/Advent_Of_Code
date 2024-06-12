@@ -176,14 +176,46 @@ int main(int argc, char const *argv[])
                      seed_to_soil_maps, number_of_seed_to_soil_maps,
                      &number_of_temp_seed_ranges);
     
+    for (int i = 0; i < number_of_temp_seed_ranges; i++) {
+        propegate_layer(seed_to_soil_maps, number_of_seed_to_soil_maps,
+                        seeds_temp_ranges[i].start, &soil_ranges[i].start);
+        propegate_layer(seed_to_soil_maps, number_of_seed_to_soil_maps,
+                        seeds_temp_ranges[i].end, &soil_ranges[i].end);
+        
+    }
+    number_of_soil_ranges = number_of_temp_seed_ranges;
+    
+    for (int i = 0; i < number_of_seed_ranges; i++) {
+        PRINT_RANGE(seeds_ranges[i]);
+    }
+
+    for (int i = 0; i < number_of_soil_ranges; i++) {
+        PRINT_RANGE(soil_ranges[i]);
+    }
+
+    creat_sub_ranges(soil_temp_ranges, soil_ranges, number_of_soil_ranges,
+                     soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                     &number_of_temp_soil_ranges);
+
+    dprintINT(number_of_soil_ranges);
+    dprintINT(number_of_temp_soil_ranges);
+    
     // for (int i = 0; i < number_of_temp_seed_ranges; i++) {
-    //     PRINT_RANGE(seeds_temp_ranges[i]);
+    //     propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+    //                     soil_temp_ranges[i].start, &fertilier_ranges[i].start);
+    //     propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+    //                     soil_temp_ranges[i].end, &fertilier_ranges[i].end);
+    // }
+    // number_of_fertilizer_ranges = number_of_temp_soil_ranges;
+
+    // dprintINT(number_of_fertilizer_ranges);
+    // dprintINT(number_of_temp_soil_ranges);
+
+
+    // for (int i = 0; i < number_of_fertilizer_ranges; i++) {
+    //     PRINT_RANGE(fertilier_ranges[i]);
     // }
 
-    uint64_t destination;
-    propegate_layer(water_to_light_maps, number_of_water_to_light_maps, 81, &destination);
-    dprintUL(destination);
-    
     return 0;
 }
 
@@ -329,7 +361,7 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
 
     for (int k = 0; k < number_of_ranges; k++) {
         current_range = ranges[k];
-        // PRINT_RANGE(current_range);
+        PRINT_RANGE(current_range);
         j = 0;
         for (int i = 0; i < number_of_maps; i++) {
             // PRINT_RANGE(maps[i].source);
@@ -375,9 +407,9 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
         }
         temp_index = j; 
 
-        // printf("\n");
-        // dprintINT(temp_index);
-        // dprintINT(k);
+        printf("\n");
+        dprintINT(temp_index);
+        dprintINT(k);
         qsort_ranges(temp_of_temp, 0, temp_index-1);
 
         // for (int i = 0; i < temp_index; i++) {
@@ -398,17 +430,22 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
 
                     smalles_index = temp_of_temp[i].end+1;
             }
-            if (smalles_index = temp_of_temp[i].start &&
+            if (smalles_index == temp_of_temp[i].start &&
                 biggest_index >= temp_of_temp[i].end) {
                     temp_ranges[(*number_of_temp_ranges)] = temp_of_temp[i];
                     (*number_of_temp_ranges)++;
                     smalles_index = temp_of_temp[i].end+1;
             }
         }
-        // for (int i = 0; i < temp_index; i++) {
-        //     PRINT_RANGE(temp_of_temp[i]);
-        // }
-        // printf("\n");
+        if(temp_index == 0) {
+            temp_ranges[(*number_of_temp_ranges)] = temp_of_temp[0];
+                    (*number_of_temp_ranges)++;
+                    smalles_index = temp_of_temp[0].end+1;
+        }
+        for (int i = 0; i < temp_index; i++) {
+            PRINT_RANGE(temp_of_temp[i]);
+        }
+        printf("\n");
     }
 
     qsort_ranges(temp_ranges, 0, *number_of_temp_ranges-1);
