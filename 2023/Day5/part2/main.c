@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e3
+#define MAX_NUM_OF_NUMBERS (int)1e4
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
     water_ranges[MAX_NUM_OF_NUMBERS] = {0},
     water_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     light_ranges[MAX_NUM_OF_NUMBERS] = {0},
-    light_temp_renges[MAX_NUM_OF_NUMBERS] = {0},
+    light_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     temperature_ranges[MAX_NUM_OF_NUMBERS] = {0},
     temperature_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     humidity_ranges[MAX_NUM_OF_NUMBERS] = {0},
@@ -86,7 +86,7 @@ int main(int argc, char const *argv[])
 
     int number_of_seed_ranges, number_of_soil_ranges,
     number_of_fertilizer_ranges, number_of_water_ranges,
-    number_of_light_ranges, number_oferature_ranges,
+    number_of_light_ranges, number_of_temperature_ranges,
     number_of_humidity_ranges, number_of_location_ranges;
 
     int number_of_temp_seed_ranges, number_of_temp_soil_ranges,
@@ -109,7 +109,7 @@ int main(int argc, char const *argv[])
                 sscanf(current_word, "%lu", &range_length);
                 seeds_ranges[i].start = range_start;
                 seeds_ranges[i].end = range_start + range_length-1;
-                PRINT_RANGE(seeds_ranges[i]);
+                // PRINT_RANGE(seeds_ranges[i]);
                 i++;
                 number_of_seed_ranges = i;
             }
@@ -175,7 +175,6 @@ int main(int argc, char const *argv[])
     creat_sub_ranges(seeds_temp_ranges, seeds_ranges, number_of_seed_ranges,
                      seed_to_soil_maps, number_of_seed_to_soil_maps,
                      &number_of_temp_seed_ranges);
-    
     for (int i = 0; i < number_of_temp_seed_ranges; i++) {
         propegate_layer(seed_to_soil_maps, number_of_seed_to_soil_maps,
                         seeds_temp_ranges[i].start, &soil_ranges[i].start);
@@ -184,11 +183,14 @@ int main(int argc, char const *argv[])
         
     }
     number_of_soil_ranges = number_of_temp_seed_ranges;
-    
+    for (int i = 0; i < number_of_soil_ranges; i++) {
+        // PRINT_RANGE(soil_ranges[i]);
+    }
+
+
     creat_sub_ranges(soil_temp_ranges, soil_ranges, number_of_soil_ranges,
                      soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
                      &number_of_temp_soil_ranges);
-    
     for (int i = 0; i < number_of_temp_seed_ranges; i++) {
         propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
                         soil_temp_ranges[i].start, &fertilizer_ranges[i].start);
@@ -196,33 +198,14 @@ int main(int argc, char const *argv[])
                         soil_temp_ranges[i].end, &fertilizer_ranges[i].end);
     }
     number_of_fertilizer_ranges = number_of_temp_soil_ranges;
-
-    for (int i = 0; i < number_of_soil_ranges; i++) {
-        PRINT_RANGE(soil_ranges[i]);
-    }
-
-    creat_sub_ranges(soil_temp_ranges, soil_ranges, number_of_soil_ranges,
-                     soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
-                     &number_of_temp_soil_ranges);
-    
-    for (int i = 0; i < number_of_temp_soil_ranges; i++) {
-        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
-                        soil_temp_ranges[i].start, &fertilizer_ranges[i].start);
-        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
-                        soil_temp_ranges[i].end, &fertilizer_ranges[i].end);
-    }
-    number_of_fertilizer_ranges = number_of_temp_soil_ranges;
-
     for (int i = 0; i < number_of_fertilizer_ranges; i++) {
-        PRINT_RANGE(fertilizer_ranges[i]);
+        // PRINT_RANGE(fertilizer_ranges[i]);
     }
+
 
     creat_sub_ranges(fertilizer_temp_ranges, fertilizer_ranges, number_of_fertilizer_ranges,
                      fertilizer_to_water_maps, number_of_fertilizer_to_water_maps,
                      &number_of_temp_fertilizer_ranges);
-
-    dprintINT(number_of_temp_fertilizer_ranges);
-    
     for (int i = 0; i < number_of_temp_fertilizer_ranges; i++) {
         propegate_layer(fertilizer_to_water_maps, number_of_fertilizer_to_water_maps,
                         fertilizer_temp_ranges[i].start, &water_ranges[i].start);
@@ -230,11 +213,78 @@ int main(int argc, char const *argv[])
                         fertilizer_temp_ranges[i].end, &water_ranges[i].end);
     }
     number_of_water_ranges = number_of_temp_fertilizer_ranges;
-
     for (int i = 0; i < number_of_water_ranges; i++) {
-        PRINT_RANGE(fertilizer_temp_ranges[i]);
-        PRINT_RANGE(water_ranges[i]);
+        // PRINT_RANGE(water_ranges[i]);
     }
+    
+
+    creat_sub_ranges(water_temp_ranges, water_ranges, number_of_water_ranges,
+                     water_to_light_maps, number_of_water_to_light_maps,
+                     &number_of_temp_water_ranges);
+    for (int i = 0; i < number_of_temp_water_ranges; i++) {
+        propegate_layer(water_to_light_maps, number_of_water_to_light_maps,
+                        water_temp_ranges[i].start, &light_ranges[i].start);
+        propegate_layer(water_to_light_maps, number_of_water_to_light_maps,
+                        water_temp_ranges[i].end, &light_ranges[i].end);
+    }
+    number_of_light_ranges = number_of_temp_water_ranges;
+    for (int i = 0; i < number_of_light_ranges; i++) {
+        // PRINT_RANGE(light_ranges[i]);
+    }
+    
+
+    creat_sub_ranges(light_temp_ranges, light_ranges, number_of_light_ranges,
+                     light_to_temperature_maps, number_of_light_to_temperature_maps,
+                     &number_of_temp_light_ranges);
+    for (int i = 0; i < number_of_temp_light_ranges; i++) {
+        propegate_layer(light_to_temperature_maps, number_of_light_to_temperature_maps,
+                        light_temp_ranges[i].start, &temperature_ranges[i].start);
+        propegate_layer(light_to_temperature_maps, number_of_light_to_temperature_maps,
+                        light_temp_ranges[i].end, &temperature_ranges[i].end);
+    }
+    number_of_temperature_ranges = number_of_temp_light_ranges;
+    for (int i = 0; i < number_of_temperature_ranges; i++) {
+        // PRINT_RANGE(temperature_ranges[i]);
+    }
+    
+
+    creat_sub_ranges(temperature_temp_ranges, temperature_ranges, number_of_temperature_ranges,
+                     temperature_to_humidity_maps, number_of_temperature_to_humidity_maps,
+                     &number_of_temp_temperature_ranges);
+    for (int i = 0; i < number_of_temp_temperature_ranges; i++) {
+        propegate_layer(temperature_to_humidity_maps, number_of_temperature_to_humidity_maps,
+                        temperature_temp_ranges[i].start, &humidity_ranges[i].start);
+        propegate_layer(temperature_to_humidity_maps, number_of_temperature_to_humidity_maps,
+                        temperature_temp_ranges[i].end, &humidity_ranges[i].end);
+    }
+    number_of_humidity_ranges = number_of_temp_temperature_ranges;
+    for (int i = 0; i < number_of_humidity_ranges; i++) {
+        // PRINT_RANGE(humidity_ranges[i]);
+    }
+    
+
+    creat_sub_ranges(humidity_temp_ranges, humidity_ranges, number_of_humidity_ranges,
+                     humidity_to_location_maps, number_of_humidity_to_location_maps,
+                     &number_of_temp_humidity_ranges);
+    for (int i = 0; i < number_of_temp_humidity_ranges; i++) {
+        propegate_layer(humidity_to_location_maps, number_of_humidity_to_location_maps,
+                        humidity_temp_ranges[i].start, &location_ranges[i].start);
+        propegate_layer(humidity_to_location_maps, number_of_humidity_to_location_maps,
+                        humidity_temp_ranges[i].end, &location_ranges[i].end);
+    }
+    number_of_location_ranges = number_of_temp_humidity_ranges;
+    for (int i = 0; i < number_of_location_ranges; i++) {
+        PRINT_RANGE(location_ranges[i]);
+    }
+
+    uint64_t smallest_location = location_ranges[0].start;
+    for (int i = 0; i < number_of_location_ranges; i++) {
+        if (smallest_location > location_ranges[i].start) {
+            smallest_location = location_ranges[i].start;
+        }
+    }
+
+    dprintINT(smallest_location); 
 
     return 0;
 }
@@ -362,13 +412,15 @@ void populat_maps(FILE *fp, Map *maps, int *number_of_maps)
 
 void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t *destination)
 {
+    // printf("\n");
     for (int i = 0; i < number_of_maps; i++) {
         if (source >= maps[i].source.start && source <= maps[i].source.end) {
             *destination = (source - maps[i].source.start) + maps[i].destination.start;
-        } else {
+        } else if (*destination == 0) {
             *destination = source;
         }
     }
+    // dprintUL(*destination);
 }
 
 void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, Map *maps, int number_of_maps, int *number_of_temp_ranges)
@@ -461,8 +513,7 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
             temp_ranges[(*number_of_temp_ranges)].start = temp_of_temp[temp_index-1].end+1;
             temp_ranges[(*number_of_temp_ranges)].end = biggest_index;
             (*number_of_temp_ranges)++;
-        }
-        if (temp_index == 0) {
+        } else if (temp_index == 0) {
             temp_ranges[(*number_of_temp_ranges)] = current_range;
             (*number_of_temp_ranges)++;
         }
