@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e2
+#define MAX_NUM_OF_NUMBERS (int)1e3
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
@@ -58,8 +58,8 @@ int main(int argc, char const *argv[])
     seeds_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     soil_ranges[MAX_NUM_OF_NUMBERS] = {0},
     soil_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
-    fertilier_ranges[MAX_NUM_OF_NUMBERS] = {0},
-    fertilier_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    fertilizer_ranges[MAX_NUM_OF_NUMBERS] = {0},
+    fertilizer_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     water_ranges[MAX_NUM_OF_NUMBERS] = {0},
     water_temp_ranges[MAX_NUM_OF_NUMBERS] = {0},
     light_ranges[MAX_NUM_OF_NUMBERS] = {0},
@@ -185,9 +185,17 @@ int main(int argc, char const *argv[])
     }
     number_of_soil_ranges = number_of_temp_seed_ranges;
     
-    for (int i = 0; i < number_of_seed_ranges; i++) {
-        PRINT_RANGE(seeds_ranges[i]);
+    creat_sub_ranges(soil_temp_ranges, soil_ranges, number_of_soil_ranges,
+                     soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                     &number_of_temp_soil_ranges);
+    
+    for (int i = 0; i < number_of_temp_seed_ranges; i++) {
+        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                        soil_temp_ranges[i].start, &fertilizer_ranges[i].start);
+        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                        soil_temp_ranges[i].end, &fertilizer_ranges[i].end);
     }
+    number_of_fertilizer_ranges = number_of_temp_soil_ranges;
 
     for (int i = 0; i < number_of_soil_ranges; i++) {
         PRINT_RANGE(soil_ranges[i]);
@@ -196,25 +204,37 @@ int main(int argc, char const *argv[])
     creat_sub_ranges(soil_temp_ranges, soil_ranges, number_of_soil_ranges,
                      soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
                      &number_of_temp_soil_ranges);
-
-    dprintINT(number_of_soil_ranges);
-    dprintINT(number_of_temp_soil_ranges);
     
-    // for (int i = 0; i < number_of_temp_seed_ranges; i++) {
-    //     propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
-    //                     soil_temp_ranges[i].start, &fertilier_ranges[i].start);
-    //     propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
-    //                     soil_temp_ranges[i].end, &fertilier_ranges[i].end);
-    // }
-    // number_of_fertilizer_ranges = number_of_temp_soil_ranges;
+    for (int i = 0; i < number_of_temp_soil_ranges; i++) {
+        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                        soil_temp_ranges[i].start, &fertilizer_ranges[i].start);
+        propegate_layer(soil_to_fertilizer_maps, number_of_soil_to_fertilizer_maps,
+                        soil_temp_ranges[i].end, &fertilizer_ranges[i].end);
+    }
+    number_of_fertilizer_ranges = number_of_temp_soil_ranges;
 
-    // dprintINT(number_of_fertilizer_ranges);
-    // dprintINT(number_of_temp_soil_ranges);
+    for (int i = 0; i < number_of_fertilizer_ranges; i++) {
+        PRINT_RANGE(fertilizer_ranges[i]);
+    }
 
+    creat_sub_ranges(fertilizer_temp_ranges, fertilizer_ranges, number_of_fertilizer_ranges,
+                     fertilizer_to_water_maps, number_of_fertilizer_to_water_maps,
+                     &number_of_temp_fertilizer_ranges);
 
-    // for (int i = 0; i < number_of_fertilizer_ranges; i++) {
-    //     PRINT_RANGE(fertilier_ranges[i]);
-    // }
+    dprintINT(number_of_temp_fertilizer_ranges);
+    
+    for (int i = 0; i < number_of_temp_fertilizer_ranges; i++) {
+        propegate_layer(fertilizer_to_water_maps, number_of_fertilizer_to_water_maps,
+                        fertilizer_temp_ranges[i].start, &water_ranges[i].start);
+        propegate_layer(fertilizer_to_water_maps, number_of_fertilizer_to_water_maps,
+                        fertilizer_temp_ranges[i].end, &water_ranges[i].end);
+    }
+    number_of_water_ranges = number_of_temp_fertilizer_ranges;
+
+    for (int i = 0; i < number_of_water_ranges; i++) {
+        PRINT_RANGE(fertilizer_temp_ranges[i]);
+        PRINT_RANGE(water_ranges[i]);
+    }
 
     return 0;
 }
@@ -361,7 +381,7 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
 
     for (int k = 0; k < number_of_ranges; k++) {
         current_range = ranges[k];
-        PRINT_RANGE(current_range);
+        // PRINT_RANGE(current_range);
         j = 0;
         for (int i = 0; i < number_of_maps; i++) {
             // PRINT_RANGE(maps[i].source);
@@ -407,9 +427,9 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
         }
         temp_index = j; 
 
-        printf("\n");
-        dprintINT(temp_index);
-        dprintINT(k);
+        // printf("\n");
+        // dprintINT(temp_index);
+        // dprintINT(k);
         qsort_ranges(temp_of_temp, 0, temp_index-1);
 
         // for (int i = 0; i < temp_index; i++) {
@@ -437,15 +457,19 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
                     smalles_index = temp_of_temp[i].end+1;
             }
         }
-        if(temp_index == 0) {
-            temp_ranges[(*number_of_temp_ranges)] = temp_of_temp[0];
-                    (*number_of_temp_ranges)++;
-                    smalles_index = temp_of_temp[0].end+1;
+        if (temp_of_temp[temp_index-1].end < biggest_index) {
+            temp_ranges[(*number_of_temp_ranges)].start = temp_of_temp[temp_index-1].end+1;
+            temp_ranges[(*number_of_temp_ranges)].end = biggest_index;
+            (*number_of_temp_ranges)++;
         }
-        for (int i = 0; i < temp_index; i++) {
-            PRINT_RANGE(temp_of_temp[i]);
+        if (temp_index == 0) {
+            temp_ranges[(*number_of_temp_ranges)] = current_range;
+            (*number_of_temp_ranges)++;
         }
-        printf("\n");
+        // for (int i = 0; i < temp_index; i++) {
+        //     PRINT_RANGE(temp_of_temp[i]);
+        // }
+        // printf("\n");
     }
 
     qsort_ranges(temp_ranges, 0, *number_of_temp_ranges-1);
