@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e1
+#define MAX_NUM_OF_NUMBERS (int)1e2
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
@@ -31,7 +31,7 @@ int get_next_word_from_line(char *dst, char *src);
 void copy_arry_by_indesies(char *target, int start, int end, char *src);
 int get_word_and_cut(char *dst, char *src);
 void populat_maps(FILE *fp, Map *maps, int *number_of_maps);
-void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t destination);
+void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t *destination);
 void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_ranges, Map *maps, int number_of_maps, int *number_of_temp_ranges);
 void qsort_ranges(Range *v, int left, int right);
 void swap_ranges(Range *v, int i, int j);
@@ -176,6 +176,14 @@ int main(int argc, char const *argv[])
                      seed_to_soil_maps, number_of_seed_to_soil_maps,
                      &number_of_temp_seed_ranges);
     
+    // for (int i = 0; i < number_of_temp_seed_ranges; i++) {
+    //     PRINT_RANGE(seeds_temp_ranges[i]);
+    // }
+
+    uint64_t destination;
+    propegate_layer(water_to_light_maps, number_of_water_to_light_maps, 81, &destination);
+    dprintUL(destination);
+    
     return 0;
 }
 
@@ -300,11 +308,13 @@ void populat_maps(FILE *fp, Map *maps, int *number_of_maps)
     }
 }
 
-void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t destination)
+void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t *destination)
 {
     for (int i = 0; i < number_of_maps; i++) {
         if (source >= maps[i].source.start && source <= maps[i].source.end) {
-            destination = (source - maps[i].source.start) + maps[i].destination.start;
+            *destination = (source - maps[i].source.start) + maps[i].destination.start;
+        } else {
+            *destination = source;
         }
     }
 }
@@ -312,12 +322,17 @@ void propegate_layer(Map* maps, int number_of_maps, uint64_t source, uint64_t de
 void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, Map *maps, int number_of_maps, int *number_of_temp_ranges)
 {
     Range current_range, temp_of_temp[MAX_NUM_OF_NUMBERS];
-    int j = 0, temp_index = 0;
+    int j, temp_index = 0;
+    uint64_t smalles_index, biggest_index;
+
+    *(number_of_temp_ranges) = 0;
 
     for (int k = 0; k < number_of_ranges; k++) {
         current_range = ranges[k];
+        // PRINT_RANGE(current_range);
+        j = 0;
         for (int i = 0; i < number_of_maps; i++) {
-            PRINT_MAP(maps[i]);
+            // PRINT_RANGE(maps[i].source);
             if (maps[i].source.start < current_range.start &&
                 maps[i].source.end < current_range.start) {
                     ;   /* no match */
@@ -326,24 +341,24 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
                 maps[i].source.end <= current_range.end &&
                 maps[i].source.end >= current_range.start) {
                     ; /* some match on the left */
-                    temp_ranges[j].start = current_range.start;
-                    temp_ranges[j].end = maps[i].source.end;
+                    temp_of_temp[j].start = current_range.start;
+                    temp_of_temp[j].end = maps[i].source.end;
                     j++;
             }
             if (maps[i].source.start >= current_range.start &&
                 maps[i].source.start < current_range.end &&
                 maps[i].source.end <= current_range.end) {
                     ; /* all the map inside range */
-                    temp_ranges[j].start = maps[i].source.start;
-                    temp_ranges[j].end = maps[i].source.end;
+                    temp_of_temp[j].start = maps[i].source.start;
+                    temp_of_temp[j].end = maps[i].source.end;
                     j++;
             }
             if (maps[i].source.start >= current_range.start &&
                 maps[i].source.start <= current_range.end &&
                 maps[i].source.end > current_range.end) {
                     ; /* some match on the right */
-                    temp_ranges[j].start = maps[i].source.start;
-                    temp_ranges[j].end = current_range.end;
+                    temp_of_temp[j].start = maps[i].source.start;
+                    temp_of_temp[j].end = current_range.end;
                     j++;
             }
             if (maps[i].source.start > current_range.end &&
@@ -353,19 +368,56 @@ void creat_sub_ranges(Range *temp_ranges, Range *ranges, int number_of_ranges, M
             if (maps[i].source.start <= current_range.start &&
                 maps[i].source.end >= current_range.end) {
                     ; /* all the range inside the map */
-                    temp_ranges[j].start = current_range.start;
-                    temp_ranges[j].end = current_range.end;
+                    temp_of_temp[j].start = current_range.start;
+                    temp_of_temp[j].end = current_range.end;
                     j++;
             }
         }
-        *number_of_temp_ranges = j;
+        temp_index = j; 
+
+        // printf("\n");
+        // dprintINT(temp_index);
+        // dprintINT(k);
+        qsort_ranges(temp_of_temp, 0, temp_index-1);
+
+        // for (int i = 0; i < temp_index; i++) {
+        //     PRINT_RANGE(temp_of_temp[i]);
+        // }
+
+        smalles_index = current_range.start;
+        biggest_index = current_range.end;
+        // dprintINT(smalles_index);
+        // dprintINT(biggest_index);
+
+        for (int i = 0; i < temp_index; i++) {
+            if (smalles_index < temp_of_temp[i].start &&
+                biggest_index >= temp_of_temp[i].end) {
+                    temp_ranges[*(number_of_temp_ranges)].start = smalles_index;
+                    temp_ranges[*(number_of_temp_ranges)].end = temp_of_temp[i].start-1;
+                    (*number_of_temp_ranges)++;
+
+                    smalles_index = temp_of_temp[i].end+1;
+            }
+            if (smalles_index = temp_of_temp[i].start &&
+                biggest_index >= temp_of_temp[i].end) {
+                    temp_ranges[(*number_of_temp_ranges)] = temp_of_temp[i];
+                    (*number_of_temp_ranges)++;
+                    smalles_index = temp_of_temp[i].end+1;
+            }
+        }
+        // for (int i = 0; i < temp_index; i++) {
+        //     PRINT_RANGE(temp_of_temp[i]);
+        // }
+        // printf("\n");
     }
 
     qsort_ranges(temp_ranges, 0, *number_of_temp_ranges-1);
 
-    for (int i = 0; i < *number_of_temp_ranges; i++) {
-        PRINT_RANGE(temp_ranges[i]);
-    }
+    // printf("\n");
+    // for (int i = 0; i < *number_of_temp_ranges; i++) {
+    //     PRINT_RANGE(temp_ranges[i]);
+    // }
+
 }
 
 /* qsort: sort v[left]...v[right] int increasing order */
