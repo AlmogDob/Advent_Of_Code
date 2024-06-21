@@ -7,6 +7,7 @@
 #define MAXDIR 100
 #define MAX_LEN_LINE (int)1e3
 #define NUM_OF_RACES (int)1e1
+#define NUM_OF_DISTANCES (int)5e2
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
@@ -38,9 +39,9 @@ int main(int argc, char const *argv[])
 
     char current_line[MAX_LEN_LINE], current_word[MAX_LEN_LINE];
 
-    int times[NUM_OF_RACES] = {0}, distances[NUM_OF_RACES] = {0},
-    current_line_len, success = 1, i = 0;
-
+    int times[NUM_OF_RACES] = {0}, current_max_distances[NUM_OF_RACES] = {0},
+    current_line_len, success = 1, i = 0, distances[NUM_OF_DISTANCES] = {0},
+    num_of_success[NUM_OF_RACES] = {0}, mul_of_success = 1;
 
     while ((current_line_len = get_line(fp, current_line)) != -1) {
         get_word_and_cut(current_word, current_line);
@@ -53,21 +54,41 @@ int main(int argc, char const *argv[])
             success = 1;
         }
         i = 0;
+        dprintSTRING(current_word);
         if (!strcmp(current_word, "Distance")) {
             while ((success = get_word_and_cut(current_word, current_line))) {
                 if (isdigit(current_word[0])) {
-                    distances[i++] = atoi(current_word);
+                    current_max_distances[i++] = atoi(current_word);
                 }
             }
             success = 1;
         }
     }
 
-    // for (int i = 0; times[i] != 0; i++) {
-    //     dprintINT(i);
-    //     dprintINT(times[i]);
-    //     dprintINT(times[i]);
-    // }
+    for (int i = 0; times[i] != 0; i++) {
+        dprintINT(i);
+        dprintINT(times[i]);
+        dprintINT(current_max_distances[i]);
+    }
+
+    printf("-------------------------\n");
+
+    for (int i = 0; times[i] != 0; i++) {
+        for (int j = 1; j < times[i]; j++) {
+            distances[j-1] = j*(times[i] - j);
+        }
+        for (int j = 0; distances[j] != 0; j++) {
+            if (distances[j] > current_max_distances[i]) {
+                num_of_success[i] += 1;
+            }
+        }
+        dprintINT(num_of_success[i]);
+    }
+
+    for (int i = 0; num_of_success[i] != 0; i++) {
+        mul_of_success *= num_of_success[i];
+    }
+    dprintINT(mul_of_success);
     
     return 0;
 }
