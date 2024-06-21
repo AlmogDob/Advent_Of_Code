@@ -7,7 +7,6 @@
 #define MAXDIR 100
 #define MAX_LEN_LINE (int)1e3
 #define NUM_OF_RACES (int)1e1
-#define NUM_OF_DISTANCES (int)5e5
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
@@ -40,10 +39,9 @@ int main(int argc, char const *argv[])
 
     char current_line[MAX_LEN_LINE], current_word[MAX_LEN_LINE], current_num[MAX_LEN_LINE] = {'\0'};
 
-    int current_line_len, success = 1, i = 0, num_of_success = 0,
-    mul_of_success = 1;
+    int current_line_len, success = 1, num_of_success = 0;
 
-    size_t time, distances[NUM_OF_DISTANCES] = {0}, current_max_dist;
+    size_t time, current_max_dist;
 
     while ((current_line_len = get_line(fp, current_line)) != -1) {
         get_word_and_cut(current_word, current_line);
@@ -57,7 +55,6 @@ int main(int argc, char const *argv[])
             }
             success = 1;
         }
-        i = 0;
         current_num[0] = '\0';
         if (!strcmp(current_word, "Distance")) {
             while ((success = get_word_and_cut(current_word, current_line))) {
