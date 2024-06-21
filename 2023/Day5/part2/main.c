@@ -5,7 +5,7 @@
 #include <inttypes.h>
 
 #define MAX_LEN_LINE (int)1e3
-#define MAX_NUM_OF_NUMBERS (int)1e4
+#define MAX_NUM_OF_NUMBERS (int)5e3
 #define MAXDIR 100
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
@@ -109,7 +109,7 @@ int main(int argc, char const *argv[])
                 sscanf(current_word, "%lu", &range_length);
                 seeds_ranges[i].start = range_start;
                 seeds_ranges[i].end = range_start + range_length-1;
-                // PRINT_RANGE(seeds_ranges[i]);
+                PRINT_RANGE(seeds_ranges[i]);
                 i++;
                 number_of_seed_ranges = i;
             }
@@ -184,7 +184,7 @@ int main(int argc, char const *argv[])
     }
     number_of_soil_ranges = number_of_temp_seed_ranges;
     for (int i = 0; i < number_of_soil_ranges; i++) {
-        // PRINT_RANGE(soil_ranges[i]);
+        PRINT_RANGE(soil_ranges[i]);
     }
 
 
@@ -199,7 +199,7 @@ int main(int argc, char const *argv[])
     }
     number_of_fertilizer_ranges = number_of_temp_soil_ranges;
     for (int i = 0; i < number_of_fertilizer_ranges; i++) {
-        // PRINT_RANGE(fertilizer_ranges[i]);
+        PRINT_RANGE(fertilizer_ranges[i]);
     }
 
 
@@ -214,7 +214,7 @@ int main(int argc, char const *argv[])
     }
     number_of_water_ranges = number_of_temp_fertilizer_ranges;
     for (int i = 0; i < number_of_water_ranges; i++) {
-        // PRINT_RANGE(water_ranges[i]);
+        PRINT_RANGE(water_ranges[i]);
     }
     
 
@@ -229,7 +229,7 @@ int main(int argc, char const *argv[])
     }
     number_of_light_ranges = number_of_temp_water_ranges;
     for (int i = 0; i < number_of_light_ranges; i++) {
-        // PRINT_RANGE(light_ranges[i]);
+        PRINT_RANGE(light_ranges[i]);
     }
     
 
@@ -244,7 +244,7 @@ int main(int argc, char const *argv[])
     }
     number_of_temperature_ranges = number_of_temp_light_ranges;
     for (int i = 0; i < number_of_temperature_ranges; i++) {
-        // PRINT_RANGE(temperature_ranges[i]);
+        PRINT_RANGE(temperature_ranges[i]);
     }
     
 
@@ -259,7 +259,7 @@ int main(int argc, char const *argv[])
     }
     number_of_humidity_ranges = number_of_temp_temperature_ranges;
     for (int i = 0; i < number_of_humidity_ranges; i++) {
-        // PRINT_RANGE(humidity_ranges[i]);
+        PRINT_RANGE(humidity_ranges[i]);
     }
     
 
@@ -284,7 +284,7 @@ int main(int argc, char const *argv[])
         }
     }
 
-    dprintINT(smallest_location); 
+    dprintUL(smallest_location); 
 
     return 0;
 }
