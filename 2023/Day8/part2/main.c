@@ -32,6 +32,18 @@ typedef struct {
     char* elements;
 } ada_char_array;
 
+typedef struct {
+    char start_node[ADRESS_LEN+1];
+    char current_node[ADRESS_LEN+1];
+    int direction_index;
+} Path;
+
+typedef struct {
+    size_t length;
+    size_t capacity;
+    Path* elements;
+} ada_path_array;
+
 int get_line(FILE *fp, char *dst);
 int length(char *str);
 int get_next_word_from_line(char *dst, char *src);
@@ -99,6 +111,8 @@ int main(int argc, char const *argv[])
     }
 
     print_directions(&directions);
+    // print_network(&network);
+    
 
     dprintINT(walk_network(&network, &directions)-1);
     
