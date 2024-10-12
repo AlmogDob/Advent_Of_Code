@@ -1,17 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include "Almog_Dynamic_Array.h"
-
-#define MAXDIR 100
-#define MAX_LEN_LINE (int)1e3
-#define NUM_OF_RACES (int)1e1
-#define NUM_OF_DISTANCES (int)5e2
-#define dprintSTRING(expr) printf(#expr " = %s\n", expr)
-#define dprintCHAR(expr) printf(#expr " = %c\n", expr)
-#define dprintINT(expr) printf(#expr " = %d\n", expr)
-#define dprintSIZE_T(expr) printf(#expr " = %zu\n", expr)
+#include "Almog_AoC.h"
+#include "string.h"
 
 #define ADRESS_LEN 3
 
@@ -45,11 +33,6 @@ typedef struct {
     Path* elements;
 } ada_path_array;
 
-int get_line(FILE *fp, char *dst);
-int length(char *str);
-int get_next_word_from_line(char *dst, char *src);
-void copy_arry_by_indesies(char *target, int start, int end, char *src);
-int get_word_and_cut(char *dst, char *src);
 void print_node(Node n);
 void print_network(ada_node_array *n);
 void print_directions(ada_char_array *d);
@@ -153,101 +136,6 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-int get_line(FILE *fp, char *dst)
-{
-    int i = 0;
-    char c;
-
-    while ((c = fgetc(fp)) != '\n' && c != EOF) {
-        dst[i] = c;
-        i++;
-        if (i >= MAX_LEN_LINE) {
-            fprintf(stderr, "ERROR: line too long\n");
-            exit(1);
-        }
-    }
-    dst[i] = '\0';
-    if (c == EOF) {
-        return -1;
-    }
-    return i;
-}
-
-int length(char *str)
-{
-    char c;
-    int i = 0;
-
-    while ((c = str[i]) != '\0') {
-        i++;
-    }
-    return i++;
-}
-
-int get_next_word_from_line(char *dst, char *src)
-{
-    int i = 0, j = 0;
-    char c;
-
-    while (isspace((c = src[i]))) {
-        i++;
-    }
-
-    while ((c = src[i]) != ' ' &&
-                      c != ';' &&
-                      c != ':' &&
-                      c != ',' &&
-                      c != '\n'&&
-                      c != '\0') {
-                        dst[j] = src[i];
-                        i++;
-                        j++;
-    }
-
-    if ((c == ' ' ||
-        c == ';' ||
-        c == ':' ||
-        c == ',' ||
-        c == '\n'||
-        c == '\0') && i == 0) {
-            dst[j++] = c;
-            i++;
-    }
-
-    dst[j] = '\0';
-
-    if (j == 0) {
-        return -1;
-    }
-    return i;
-
-}
-
-void copy_arry_by_indesies(char *target, int start, int end, char *src)
-{
-    int j = 0;
-    for (int i = start; i < end; i++) {
-        target[j] = src[i];
-        j++;
-    }
-    target[j] = '\0';
-}
-
-int get_word_and_cut(char *dst, char *src)
-{
-    int last_pos;
-
-    if (src[0] == '\0') {
-        return 0;
-    }
-    last_pos = get_next_word_from_line(dst, src);
-    if (last_pos == -1) {
-        return 0;
-    }
-    copy_arry_by_indesies(src, last_pos, length(src), src);
-    return 1;
-}
-
 void print_node(Node n)
 {
     printf("%s = (%s, %s)\n", n.name, n.left, n.right);
@@ -278,7 +166,7 @@ void print_pathes(ada_path_array *p)
         print_node(p->elements[i].start_node);
         printf("current node: ");
         print_node(p->elements[i].current_node);
-        printf("direction index: %d\n", p->elements[i].direction_index);
+        printf("direction index: %zu\n", p->elements[i].direction_index);
     }
     printf("\n");
 }
