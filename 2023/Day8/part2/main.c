@@ -11,6 +11,7 @@
 #define dprintSTRING(expr) printf(#expr " = %s\n", expr)
 #define dprintCHAR(expr) printf(#expr " = %c\n", expr)
 #define dprintINT(expr) printf(#expr " = %d\n", expr)
+#define dprintSIZE_T(expr) printf(#expr " = %zu\n", expr)
 
 #define ADRESS_LEN 3
 
@@ -33,9 +34,9 @@ typedef struct {
 } ada_char_array;
 
 typedef struct {
-    char start_node[ADRESS_LEN+1];
-    char current_node[ADRESS_LEN+1];
-    int direction_index;
+    Node start_node;
+    Node current_node;
+    size_t direction_index;
 } Path;
 
 typedef struct {
@@ -52,9 +53,13 @@ int get_word_and_cut(char *dst, char *src);
 void print_node(Node n);
 void print_network(ada_node_array *n);
 void print_directions(ada_char_array *d);
+void print_pathes(ada_path_array *p);
 void get_next_node_name(char *name, Node node, char direction);
 int get_index_of_node(ada_node_array *network, char *name);
-int walk_network(ada_node_array *network, ada_char_array *directions);
+int walk_network(ada_node_array *network, ada_char_array *directions, ada_path_array *pathes, int path_num);
+void step_path_of_pathes(ada_node_array *network, ada_path_array *pathes, char direction, int path_num);
+int reach_destination(ada_path_array *pathes, int path_num);
+size_t lcm(size_t n1, size_t n2);
 
 int main(int argc, char const *argv[])
 {
@@ -76,6 +81,7 @@ int main(int argc, char const *argv[])
 /*------------------------------------------------------------*/
     ada_node_array network;
     ada_char_array directions;
+    ada_path_array pathes;
     Node current_node;
     char current_word[MAX_LEN_LINE], current_line[MAX_LEN_LINE];
     int line_len, i = 0;
@@ -111,10 +117,38 @@ int main(int argc, char const *argv[])
     }
 
     print_directions(&directions);
-    // print_network(&network);
-    
+    print_network(&network);
 
-    dprintINT(walk_network(&network, &directions)-1);
+    ada_array(Path, pathes);
+    
+    for (size_t i = 0; i < network.length; i++) {
+        Path path;
+        if (network.elements[i].name[2] == 'A') {
+            char node_name[ADRESS_LEN+1]; 
+            Node current_node;
+            
+            strncpy(node_name, network.elements[i].name, ADRESS_LEN+1);
+            current_node = network.elements[get_index_of_node(&network, node_name)];
+            path.start_node = current_node;
+            path.current_node = path.start_node;
+            path.direction_index = 0;
+
+            ada_appand(Path, pathes, path);
+        }
+    }
+
+    for (size_t i = 0; i < pathes.length; i++) {
+        dprintINT(walk_network(&network, &directions, &pathes, i));
+    }
+    print_pathes(&pathes);
+
+    size_t temp = lcm(pathes.elements[0].direction_index, pathes.elements[1].direction_index);
+    temp = lcm(temp, pathes.elements[2].direction_index);
+    temp = lcm(temp, pathes.elements[3].direction_index);
+    temp = lcm(temp, pathes.elements[4].direction_index);
+    temp = lcm(temp, pathes.elements[5].direction_index);
+    dprintSIZE_T(temp);
+
     
     return 0;
 }
@@ -234,6 +268,21 @@ void print_directions(ada_char_array *d)
     printf("\n");
 }
 
+void print_pathes(ada_path_array *p)
+{
+    printf("\n");
+    for (size_t i = 0; i < p->length; i++) {
+        printf("path-%zu\n", i+1);
+        printf("---------------\n");
+        printf("start   node: ");
+        print_node(p->elements[i].start_node);
+        printf("current node: ");
+        print_node(p->elements[i].current_node);
+        printf("direction index: %d\n", p->elements[i].direction_index);
+    }
+    printf("\n");
+}
+
 void get_next_node_name(char *name, Node node, char direction)
 {
     if (direction == 'L') {
@@ -254,33 +303,48 @@ int get_index_of_node(ada_node_array *network, char *name)
     return -1;
 }
 
-int walk_network(ada_node_array *network, ada_char_array *directions)
+int walk_network(ada_node_array *network, ada_char_array *directions, ada_path_array *pathes, int path_num)
 {
-    int step = 0, next_node_index, start_index;
-    char current_node_name[ADRESS_LEN+1] = {0}, next_node_name[ADRESS_LEN+1] = {0};
+    size_t step = 0;
 
-    start_index = get_index_of_node(network, "AAA");
-    get_next_node_name(next_node_name, network->elements[start_index], directions->elements[0]);
-    step++;
-
-    while (strncmp(current_node_name, "ZZZ", ADRESS_LEN+1)) {
-        if (step > 1000000) {
+    while (!reach_destination(pathes, path_num)) {
+        if (step >= 1e8) {
             return -1;
         }
 
-        // dprintSTRING(next_node_name);
-        next_node_index = get_index_of_node(network, next_node_name);
-        print_node(network->elements[next_node_index]);
+        step_path_of_pathes(network, pathes, directions->elements[step%(directions->length)], path_num);
 
-        strncpy(current_node_name, network->elements[next_node_index].name, ADRESS_LEN+1);
-        dprintSTRING(current_node_name);
-        dprintCHAR(directions->elements[step%(directions->length)]);
-        next_node_index = get_index_of_node(network, current_node_name);
-        get_next_node_name(next_node_name,
-                           network->elements[next_node_index],
-                           directions->elements[step%(directions->length)]);
+
         step++;
+        // dprintINT(step);
 
     }
     return step;
+}
+
+void step_path_of_pathes(ada_node_array *network, ada_path_array *pathes, char direction, int path_num)
+{
+    char next_node_name[ADRESS_LEN+1] = {0};
+    get_next_node_name(next_node_name, pathes->elements[path_num].current_node, direction);
+    pathes->elements[path_num].current_node = network->elements[get_index_of_node(network, next_node_name)];
+    pathes->elements[path_num].direction_index++;
+}
+
+int reach_destination(ada_path_array *pathes, int path_num)
+{
+    if (pathes->elements[path_num].current_node.name[2] != 'Z') {
+        return 0;
+    }
+    return 1;
+}
+
+size_t lcm(size_t n1, size_t n2)
+{
+    size_t max = (n1 > n2) ? n1 : n2;
+    size_t LCM = max;
+
+    while ((LCM % n1 != 0) || LCM % n2 != 0) {
+        LCM += max;
+    }
+    return LCM;
 }
