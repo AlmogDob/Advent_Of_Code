@@ -27,8 +27,11 @@ ada_int_array get_diff_sequence(ada_int_array a);
 int all_zeros(ada_int_array array);
 ada_array_of_ada_int_array create_diff_sequences_of_history(ada_int_array history);
 void extrapolate_next_value(ada_array_of_arrays_of_ada_int_array *a);
-void add_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar);
-int add_next_values(ada_array_of_arrays_of_ada_int_array *a);
+void extrapolate_previous_value(ada_array_of_arrays_of_ada_int_array *a);
+void add_last_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar);
+void add_first_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar);
+int sum_last_values(ada_array_of_arrays_of_ada_int_array *a);
+int sum_first_values(ada_array_of_arrays_of_ada_int_array *a);
 
 int main(int argc, char const *argv[])
 {
@@ -76,14 +79,11 @@ int main(int argc, char const *argv[])
         ada_appand(ada_array_of_ada_int_array, OASIS_report, sequences);
     }
 
-    print_list_of_list_of_int_array(&OASIS_report);
-    extrapolate_next_value(&OASIS_report);
-
-    // ada_insert(int, OASIS_report.elements[OASIS_report.length-1].elements[OASIS_report.elements[OASIS_report.length-1].length-1], 3, 0);
+    extrapolate_previous_value(&OASIS_report);
 
     print_list_of_list_of_int_array(&OASIS_report);
     
-    dprintINT(add_next_values(&OASIS_report));
+    dprintINT(sum_first_values(&OASIS_report));
 
     return 0;
 }
@@ -160,12 +160,23 @@ void extrapolate_next_value(ada_array_of_arrays_of_ada_int_array *a)
     for (size_t i = 0; i < a->length; i++) {
         ada_appand(int, a->elements[i].elements[a->elements[i].length-1], 0);
         for (int j = (int)a->elements[i].length - 2; j >= 0; j--) {
-            add_value_according_to_next_seq(&(a->elements[i]), j);
+            add_last_value_according_to_next_seq(&(a->elements[i]), j);
         }
     }
 }
 
-void add_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar)
+void extrapolate_previous_value(ada_array_of_arrays_of_ada_int_array *a)
+{
+    for (int i = 0; i < (int)a->length; i++) {
+        ada_insert(int, a->elements[i].elements[a->elements[i].length-1], 0, 0);
+        for (int j = (int)a->elements[i].length - 2; j >= 0; j--) {
+            add_first_value_according_to_next_seq(&(a->elements[i]), j);
+        }
+    }
+
+}
+
+void add_last_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar)
 {
     int next_layar_last_value = a->elements[layar+1].elements[a->elements[layar+1].length-1];
     int current_layar_last_value = a->elements[layar].elements[a->elements[layar].length-1];
@@ -173,7 +184,15 @@ void add_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar
     ada_appand(int, a->elements[layar], current_layar_last_value + next_layar_last_value);
 }
 
-int add_next_values(ada_array_of_arrays_of_ada_int_array *a)
+void add_first_value_according_to_next_seq(ada_array_of_ada_int_array *a, size_t layar)
+{
+    int current_layar_first_value = a->elements[layar].elements[0];
+    int next_layar_first_value = a->elements[layar+1].elements[0];
+
+    ada_insert(int, a->elements[layar], current_layar_first_value - next_layar_first_value, 0);
+}
+
+int sum_last_values(ada_array_of_arrays_of_ada_int_array *a)
 {
     int sum = 0;
 
@@ -181,4 +200,15 @@ int add_next_values(ada_array_of_arrays_of_ada_int_array *a)
         sum += a->elements[i].elements[0].elements[a->elements[i].elements[0].length-1];
     }
     return sum;
+}
+
+int sum_first_values(ada_array_of_arrays_of_ada_int_array *a)
+{
+    int sum = 0;
+
+    for (size_t i = 0; i < a->length; i++) {
+        sum += a->elements[i].elements[0].elements[0];
+    }
+    return sum;
+
 }
