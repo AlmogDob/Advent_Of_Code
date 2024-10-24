@@ -1,7 +1,7 @@
 main: build run clean
 	@echo main done
 build: main.c
-	gcc -Wall -Wextra ./main.c -lm -g -o main
+	gcc -Wall -Wextra ./main.c -lm -o main
 
 run:
 	./main $(FILE)
