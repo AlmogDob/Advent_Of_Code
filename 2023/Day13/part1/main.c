@@ -76,6 +76,9 @@ int main(int argc, char const *argv[])
 
     print_list_of_paterns(&paterns);
 
+    // dprintINT(get_num_same_col(&(paterns.elements[0]), 4, 5));
+    // dprintINT(get_num_same_row(&(paterns.elements[1]), 4, 3));
+
     for (size_t i = 0; i < paterns.length; i++) {
         max_num_same_col = get_max_num_same_col(&(paterns.elements[i])); 
         max_num_same_row = get_max_num_same_row(&(paterns.elements[i])); 
@@ -162,12 +165,12 @@ int get_num_same_row(Patern *patern, int r1, int r2)
         r1 = r2; 
         r2 = temp;
     }
-    
-    while (r1 - i >= 0 && r2 + i < patern->ny) {
-        if (!same_row(patern, r1 - i, r2 + i)) {
+
+    while (same_row(patern, r1 - i, r2 + i)) {
+        if (r1 - i == 0 || r2 + i == patern->ny - 1) {
+            num = i + 1;
             break;
         }
-        num++;
         i++;
     }
     return num;
@@ -183,11 +186,11 @@ int get_num_same_col(Patern *patern, int c1, int c2)
         c2 = temp;
     }
 
-    while (c1 - i >= 0 && c2 + i < patern->nx) {
-        if (!same_col(patern, c1 - i, c2 + i)) {
+    while (same_col(patern, c1 - i, c2 + i)) {
+        if (c1 - i == 0 || c2 + i == patern->nx - 1) {
+            num = i + 1;
             break;
         }
-        num++;
         i++;
     }
     return num;
