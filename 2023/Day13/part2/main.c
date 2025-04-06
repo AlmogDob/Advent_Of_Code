@@ -35,6 +35,7 @@ int get_num_diff_in_col(Patern *patern, int c1, int c2);
 int get_index_1_diff_row(Patern *patern); 
 int get_index_1_diff_col(Patern *patern); 
 void set_refl_index(Patern *patern);
+void set_refl_index_for_list_of_paterns(ada_Patern_array *list);
 
 int main(int argc, char const *argv[])
 {
@@ -84,11 +85,10 @@ int main(int argc, char const *argv[])
         ada_appand(Patern, paterns, temp_patern);
     }
 
-    // print_list_of_paterns(&paterns);
-    print_patern(&(paterns.elements[0]));
-    
-    dprintINT(get_index_1_diff_col(&(paterns.elements[0])));
-    dprintINT(get_max_num_same_col(&(paterns.elements[0])));
+    set_refl_index_for_list_of_paterns(&paterns);
+
+    print_list_of_paterns(&paterns);
+    // print_patern(&(paterns.elements[0]));
 
     return 0;
 }
@@ -121,6 +121,12 @@ void print_patern(Patern *patern)
             printf("%d ", patern->elements[offset2D(x, y, patern->nx)]);
         }
         printf("\n");
+    }
+    if (patern->hori_refl_index != -1) {
+        printf("hori, %d\n", patern->hori_refl_index);
+    }
+    if (patern->vert_refl_index != -1) {
+        printf("vert, %d\n", patern->vert_refl_index);
     }
     printf("===============\n");
 }
@@ -309,5 +315,22 @@ int get_index_1_diff_col(Patern *patern)
 
 void set_refl_index(Patern *patern)
 {
+    int max_num_sam_col = get_max_num_same_col(patern);
+    int max_num_sam_row = get_max_num_same_row(patern);
 
+    for (int i = 0; i < patern->nx - 1; i++) {
+        int temp_col = get_num_same_col(patern, i, i+1);
+        if (temp_col == max_num_sam_col && temp_col != 0) patern->vert_refl_index = i;
+    }
+    for (int i = 0; i < patern->ny - 1; i++) {
+        int temp_row = get_num_same_row(patern, i, i+1);
+        if (temp_row == max_num_sam_row && temp_row != 0) patern->hori_refl_index = i;
+    }
+}
+
+void set_refl_index_for_list_of_paterns(ada_Patern_array *list)
+{
+    for (size_t i = 0; i < list->length; i++) {
+        set_refl_index(&(list->elements[i]));
+    }
 }
