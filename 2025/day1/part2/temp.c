@@ -1,49 +1,48 @@
 #define ALMOG_STRING_MANIPULATION_IMPLEMENTATION
 #include "./Almog_String_Manipulation.h"
 
-#include <assert.h>
-
-
-int rotate_dial(int current_dial, int num_of_clicks, int min_lim, int high_lim) 
-{
-    assert(min_lim == 0);
-
-    if (num_of_clicks >= 0) {
-        return (current_dial + num_of_clicks) % (high_lim + 1);
-    } else {
-        while (num_of_clicks > (high_lim + 1)) {
-            num_of_clicks -= (high_lim + 1);
-        }
-        return (current_dial + num_of_clicks + high_lim + 1) % (high_lim + 1);
-    }
-}
-
 int main(void)
 {
+    // FILE *fp = fopen("./test_input1.txt", "rt");
+    // FILE *fp = fopen("./test_input.txt", "rt");
     FILE *fp = fopen("./input.txt", "rt");
 
     char line[ASM_MAX_LEN_LINE], the_num[ASM_MAX_LEN_LINE]; 
 
     int current_dial = 50; 
     int count = 0;
-    asm_dprintINT(current_dial);
+    int max_lim = 99;
+    int min_lim = 0;
 
     while (asm_get_line(fp, line) != -1) {
         int sign = 0;
         if (line[0] == 'L') sign = -1; 
         if (line[0] == 'R') sign = 1; 
+        
+        if (sign == 0) continue;
+
         {
             int i = 1, j = 0;
             while (isdigit(line[i])) {
                 the_num[j++] = line[i++];
             }
             the_num[j] = '\0';
-
         }
-        current_dial = rotate_dial(current_dial, sign * atoi(the_num), 0, 99);
-        asm_dprintINT(current_dial);
-        if (current_dial == 0) {
-            count += 1;
+        
+        int steps = atoi(the_num);
+        
+        for (int k = 0; k < steps; k++) {
+            if (sign == 1) {
+                current_dial++;
+                if (current_dial > max_lim) current_dial = min_lim;
+            } else {
+                current_dial--;
+                if (current_dial < 0) current_dial = max_lim;
+            }
+
+            if (current_dial == 0) {
+                count++;
+            }
         }
     }
 
