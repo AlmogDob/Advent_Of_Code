@@ -1,15 +1,45 @@
-#define ASM_MAX_LEN (int)1e4
+#define NUM_OF_ROWS 5
+#define ASM_MAX_LEN (int)1e4 * NUM_OF_ROWS
 #define ALMOG_STRING_MANIPULATION_IMPLEMENTATION
 #include "./Almog_String_Manipulation.h"
 #include "./Almog_Dynamic_Array.h"
 
-#define MAX_LEN_WORD 50
-
-typedef char Word[MAX_LEN_WORD];
 
 int offset2d(int i, int j, int nj)
 {
     return i * nj + j;
+}
+
+bool column_is_empty(char *equations, int j, int nj)
+{
+    for (int i = 0; i < NUM_OF_ROWS; i++) {
+        if (equations[offset2d(i, j, nj)] != ' ') {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+size_t calc_problem(char *equations, int previous_jndex, int current_jndex, int nj)
+{
+    size_t ans = 0;
+    if (equations[offset2d(NUM_OF_ROWS-1, previous_jndex, nj)] == '*') {
+        ans = 1;
+    }
+    for (int j = previous_jndex; j < current_jndex; j++) {
+        char word[NUM_OF_ROWS] = {'\0'};
+        for (int i = 0; i < NUM_OF_ROWS-1; i++) {
+            word[i] = equations[offset2d(i, j, nj)];
+        }
+        if (equations[offset2d(NUM_OF_ROWS-1, previous_jndex, nj)] == '*') {
+            ans *= asm_str2size_t(word, NULL, 10);
+        } else {
+            ans += asm_str2size_t(word, NULL, 10);
+        }
+    }
+
+    return ans;
 }
 
 int main(void)
@@ -18,43 +48,28 @@ int main(void)
     FILE *fp = fopen("./input.txt", "rt");
 
     char line[ASM_MAX_LEN] = {'\0'};
-    char next_word[ASM_MAX_LEN] = {'\0'};
-    Word equations[ASM_MAX_LEN * 4] = {'\0'};
+    char equations[ASM_MAX_LEN] = {'\0'};
 
-    int i = 0, stride = 0;
     while ((asm_get_line(fp, line)) != -1) {
-        stride = 0;
-        while (asm_get_word_and_cut(next_word, line, ' ', 0)) {
-            asm_strncat(equations[i++], next_word, MAX_LEN_WORD);
-            stride++;
-        }
+        asm_strncat(equations, line, ASM_MAX_LEN);
     }
-    int num_of_eq = i;
-    int nj = stride;
-    int ni = num_of_eq / nj;
 
-    // for (int j = 0; j < num_of_eq; j++) {
-    //     asm_dprintSTRING(equations[j]);
-    // }
-    asm_dprintINT(ni);
-    asm_dprintINT(nj);
+    int ni = NUM_OF_ROWS; 
+    int nj = asm_length(equations) / ni;
+
     size_t sum = 0;
-    for (int j = 0; j < nj; j++) {
+
+    for (int current_jndex = 0, previous_jndex = 0; current_jndex < nj; current_jndex++) {
         size_t ans = 0;
-        if (equations[offset2d(4, j, nj)][0] == '*') {
-            ans = 1;
-            for (int i = 0; i < 4; i++) {
-                ans *= asm_str2size_t(equations[offset2d(i, j, nj)], NULL, 10);
-            }
-        } else if (equations[offset2d(4, j, nj)][0] == '+') {
-            ans = 0;
-            for (int i = 0; i < 4; i++) {
-                ans += asm_str2size_t(equations[offset2d(i, j, nj)], NULL, 10);
-            }
+        if (column_is_empty(equations, current_jndex, nj)) {
+            ans = calc_problem(equations, previous_jndex, current_jndex, nj);
+            previous_jndex = ++current_jndex;
+        } else if (current_jndex == nj -1) {
+            ans = calc_problem(equations, previous_jndex, ++current_jndex, nj);
         }
         sum += ans;
     }
-
+    
     asm_dprintSIZE_T(sum);
 
     return 0;
